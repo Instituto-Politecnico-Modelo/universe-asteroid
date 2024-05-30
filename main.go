@@ -125,6 +125,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	for {
+		fmt.Println("Fetching snapshots")
 		for cur.Next(context.TODO()) {
 			var cam types.Camera
 			err := cur.Decode(&cam)
@@ -133,7 +134,7 @@ func main() {
 			go publishSnapshot(cam, &wg)
 
 		}
-		time.After(30 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 
 	wg.Wait()
