@@ -1,0 +1,10 @@
+rabbitmq_server:
+  uri: amqp://guest:guest@localhost
+
+mongodb:
+  uri: mongodb://localhost:27017
+  db: galaxy
+
+snapshot:
+  directory: /var/www/html/snapshots
+  url_prefix: http://172.16.4.173/snapshots

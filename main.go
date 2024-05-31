@@ -3,6 +3,7 @@ package main
 import (
 	"asteroid/types"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -37,7 +38,7 @@ func publishSnapshot(cam types.Camera, wg *sync.WaitGroup) types.Snapshot {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"test",
+		"task_queue",
 		true,
 		false,
 		false,
@@ -49,14 +50,20 @@ func publishSnapshot(cam types.Camera, wg *sync.WaitGroup) types.Snapshot {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	msg, err := json.Marshal(struct {
+		ID  primitive.ObjectID `json:"_id"`
+		URL string             `json:"url"`
+	}{snap.ID, snap.URL})
+	failOnError(err, "Failed to marshal snapshot")
+
 	err = ch.PublishWithContext(ctx,
 		"",
 		q.Name,
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(snap.ID.Hex()),
+			ContentType: "text/json",
+			Body:        msg,
 		})
 
 	failOnError(err, "Failed to publish")
@@ -96,16 +103,18 @@ func main() {
 	_, err := exec.LookPath("ffmpeg")
 	failOnError(err, "ffmpeg is not installed")
 
-	f, err := os.Open("config.yaml")
-	failOnError(err, "Failed to open config file")
-	defer f.Close()
-
-	failOnError(envconfig.Process(context.Background(), &cfg),
-		"Failed to process environment variables")
-
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
-	failOnError(err, "Failed to decode config file")
+	// check if config file exists
+	if _, err := os.Stat("config.yaml"); os.IsExist(err) {
+		f, err := os.Open("config.yaml")
+		failOnError(err, "Failed to open config file")
+		defer f.Close()
+		decoder := yaml.NewDecoder(f)
+		err = decoder.Decode(&cfg)
+		failOnError(err, "Failed to decode config file")
+	} else {
+		failOnError(envconfig.Process(context.Background(), &cfg),
+			"Failed to process environment variables")
+	}
 
 	if cfg.RabbitMQServer.URI != "" {
 		rmq, err = amqp.Dial(cfg.RabbitMQServer.URI)
@@ -120,11 +129,11 @@ func main() {
 	failOnError(err, "Failed to connect to MongoDB")
 
 	coll := dbconn.Database(cfg.MongoDB.DB).Collection("cameras")
-	cur, err := coll.Find(context.TODO(), bson.D{{}})
-	failOnError(err, "Failed to fetch cameras")
 
 	var wg sync.WaitGroup
 	for {
+		cur, err := coll.Find(context.TODO(), bson.D{{}})
+		failOnError(err, "Failed to fetch cameras")
 		fmt.Println("Fetching snapshots")
 		for cur.Next(context.TODO()) {
 			var cam types.Camera

@@ -1,0 +1,43 @@
+version: '3'
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:15672"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  asteroid:
+    build: .
+    container_name: asteroid
+    environment:
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB=galaxy
+      - SNAPSHOT_DIRECTORY=/var/www/html/snapshots
+      - SNAPSHOT_URL_PREFIX=http://localhost/snapshots
+    ports:
+      - "80:80"
+    volumes:
+      - ./snapshots:/var/www/html/snapshots
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
