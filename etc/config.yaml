@@ -6,5 +6,5 @@ mongodb:
   db: galaxy
 
 snapshot:
-  directory: /var/www/html/snapshots
-  url_prefix: http://172.16.4.173/snapshots
+  directory: /usr/share/nginx/html/snapshots
+  url_prefix: http://localhost/snapshots

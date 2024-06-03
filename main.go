@@ -43,7 +43,7 @@ func publishSnapshot(cam types.Camera, wg *sync.WaitGroup) types.Snapshot {
 		false,
 		false,
 		false,
-		nil,
+		amqp.Table{"x-max-length": cfg.RabbitMQServer.MaxQueueLength},
 	)
 	failOnError(err, "Failed to declare a queue")
 

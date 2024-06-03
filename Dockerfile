@@ -7,10 +7,12 @@ RUN go build -o /go/bin/app
 
 FROM nginx:alpine
 COPY --from=builder /go/bin/app /opt/app
-COPY ./etc/nginx.conf /etc/nginx/nginx.conf
-RUN mkdir -p /var/www/html/snapshots
+COPY ./etc/default.conf /etc/nginx/conf.d/default.conf
+RUN mkdir -p /usr/share/nginx/html/snapshots
 RUN apk update && apk add --no-cache ffmpeg
+COPY ./etc/start.sh /opt/start.sh
+RUN ["chmod", "+x", "/opt/start.sh"]
 
-ENV SNAPSHOT_DIRECTORY=/var/www/html/snapshots
+ENV SNAPSHOT_DIRECTORY=/usr/share/nginx/html/snapshots
 EXPOSE 80
-CMD ["/opt/app"] 
+ENTRYPOINT [ "/opt/start.sh" ]
