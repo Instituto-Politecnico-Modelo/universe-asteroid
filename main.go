@@ -73,11 +73,11 @@ func publishSnapshot(cam types.Camera, wg *sync.WaitGroup) types.Snapshot {
 }
 
 func fetchSnapshot(cam types.Camera) types.Snapshot {
-	t := time.Now()
+	t := time.Time.Local(time.Now())
 	ret := types.Snapshot{
 		Filename:  fmt.Sprintf("%s_%s.jpg", cam.ID.Hex(), t.Format("2006-01-02T15:04:05")),
 		Timestamp: t,
-		URL:       fmt.Sprintf("%s/%s_%s.jpg", cfg.Snapshot.URL_Prefix, cam.ID.Hex(), t.Format("2006-01-02T15:04:05")),
+		URL:       fmt.Sprintf("%s/%s_%s.jpg", cfg.Snapshot.URLPrefix, cam.ID.Hex(), t.Format("2006-01-02T15:04:05")),
 		CameraID:  cam.ID,
 	}
 
@@ -143,7 +143,7 @@ func main() {
 			go publishSnapshot(cam, &wg)
 
 		}
-		time.Sleep(30 * time.Second)
+		time.Sleep(time.Duration(cfg.Snapshot.WaitInterval) * time.Second)
 	}
 
 	wg.Wait()

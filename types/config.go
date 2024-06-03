@@ -14,7 +14,8 @@ type Config struct {
 		DB  string `yaml:"db" env:"MONGODB_DB"`
 	} `yaml:"mongodb"`
 	Snapshot struct {
-		Directory  string `yaml:"directory" env:"SNAPSHOT_DIRECTORY"`
-		URL_Prefix string `yaml:"url_prefix" env:"SNAPSHOT_URL_PREFIX"`
+		Directory    string  `yaml:"directory" env:"SNAPSHOT_DIRECTORY"`
+		URLPrefix    string  `yaml:"url_prefix" env:"SNAPSHOT_URL_PREFIX"`
+		WaitInterval float32 `yaml:"wait_interval" env:"SNAPSHOT_WAIT_INTERVAL"`
 	} `yaml:"snapshot"`
 }
