@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 services:
   mongo:
     image: mongo:latest
@@ -23,8 +23,8 @@ services:
       - MONGODB_URI=mongodb://mongo:27017
       - MONGODB_DB=galaxy
       - SNAPSHOT_DIRECTORY=/usr/share/nginx/html/snapshots
-      - SNAPSHOT_URL_PREFIX=http://localhost/snapshots
-      - SNAPSHOT_WAIT_INTERVAL=2
+      - SNAPSHOT_URL_PREFIX=http://asteroid/snapshots
+      - SNAPSHOT_WAIT_INTERVAL=30
       - RABBITMQ_MAX_QUEUE_LENGTH=250
     ports:
       - "80:80"
