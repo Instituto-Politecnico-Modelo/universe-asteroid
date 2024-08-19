@@ -24,10 +24,11 @@ var cfg types.Config
 var dbconn *mongo.Client
 var rmq *amqp.Connection
 
-func publishSnapshot(cam types.Camera, wg *sync.WaitGroup) types.Snapshot {
+func publishSnapshot(cam types.Camera, batch_id primitive.ObjectID, wg *sync.WaitGroup) types.Snapshot {
 	defer wg.Done()
 
 	snap := fetchSnapshot(cam)
+	snap.BatchID = batch_id
 
 	result, err := dbconn.Database(cfg.MongoDB.DB).Collection("snapshots").InsertOne(context.TODO(), snap)
 	failOnError(err, "Failed to insert snapshot")
@@ -92,11 +93,29 @@ func fetchSnapshot(cam types.Camera) types.Snapshot {
 	return ret
 }
 
+func createBatch(waitInterval float32) types.Batch {
+	// round current time to a multiple of waitInterval
+	t := time.Now()
+	t = t.Add(time.Duration(-t.Nanosecond()))
+	t = t.Add(time.Duration(-t.Second() % int(waitInterval)))
+	batch := types.Batch{
+		Timestamp: t,
+	}
+
+	result, err := dbconn.Database(cfg.MongoDB.DB).Collection("batches").InsertOne(context.TODO(), batch)
+	failOnError(err, "Failed to insert batch")
+	batch.ID = result.InsertedID.(primitive.ObjectID)
+
+	return batch
+}
+
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Panicf("%s: %s", msg, err)
 	}
 }
+
+var wg sync.WaitGroup
 
 func main() {
 	// check if ffmpeg is installed
@@ -128,11 +147,12 @@ func main() {
 	dbconn, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.MongoDB.URI))
 	failOnError(err, "Failed to connect to MongoDB")
 
-	coll := dbconn.Database(cfg.MongoDB.DB).Collection("cameras")
+	camerasColl := dbconn.Database(cfg.MongoDB.DB).Collection("cameras")
 
-	var wg sync.WaitGroup
+	wg := sync.WaitGroup{}
 	for {
-		cur, err := coll.Find(context.TODO(), bson.D{{}})
+		batch := createBatch(cfg.Snapshot.WaitInterval)
+		cur, err := camerasColl.Find(context.TODO(), bson.D{{}})
 		failOnError(err, "Failed to fetch cameras")
 		fmt.Println("Fetching snapshots")
 		for cur.Next(context.TODO()) {
@@ -140,11 +160,9 @@ func main() {
 			err := cur.Decode(&cam)
 			failOnError(err, "Failed to decode camera")
 			wg.Add(1)
-			go publishSnapshot(cam, &wg)
+			go publishSnapshot(cam, batch.ID, &wg)
 
 		}
-		time.Sleep(time.Duration(cfg.Snapshot.WaitInterval) * time.Second)
 	}
-
 	wg.Wait()
 }

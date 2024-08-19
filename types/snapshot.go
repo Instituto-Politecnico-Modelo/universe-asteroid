@@ -17,4 +17,6 @@ type Snapshot struct {
 	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
 	// The ID of the camera that took the snapshot
 	CameraID primitive.ObjectID `json:"camera_id" bson:"camera_id,omitempty"`
+	// The ID of the batch that the snapshot belongs to
+	BatchID primitive.ObjectID `json:"batch_id" bson:"batch_id,omitempty"`
 }
