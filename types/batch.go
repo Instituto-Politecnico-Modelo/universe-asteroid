@@ -8,6 +8,6 @@ import (
 
 type Batch struct {
 	// The ID of the batch
-	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Timestamp time.Time          `json:"timestamp" bson:"timestamp"`
 }

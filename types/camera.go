@@ -4,7 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Camera struct {
 	// The ID of the camera
-	ID primitive.ObjectID `json:"id" bson:"_id"`
+	ID primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 
 	// The name of the camera
 	Name string `json:"name" bson:"name"`
