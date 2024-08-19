@@ -154,7 +154,7 @@ func main() {
 		batch := createBatch(cfg.Snapshot.WaitInterval)
 		cur, err := camerasColl.Find(context.TODO(), bson.D{{}})
 		failOnError(err, "Failed to fetch cameras")
-		fmt.Println("Fetching snapshots")
+		fmt.Println("Fetching snapshots for batch", batch.ID, " ", batch.Timestamp)
 		for cur.Next(context.TODO()) {
 			var cam types.Camera
 			err := cur.Decode(&cam)
@@ -163,6 +163,7 @@ func main() {
 			go publishSnapshot(cam, batch.ID, &wg)
 
 		}
+		time.Sleep(time.Duration(cfg.Snapshot.WaitInterval) * time.Second)
 	}
 	wg.Wait()
 }
