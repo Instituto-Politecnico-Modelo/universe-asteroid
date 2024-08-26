@@ -161,9 +161,15 @@ func main() {
 			failOnError(err, "Failed to decode camera")
 			wg.Add(1)
 			go publishSnapshot(cam, batch.ID, &wg)
-
+		}
+		wg.Wait()
+		// set batch fetch_completed to true
+		_, err = dbconn.Database(cfg.MongoDB.DB).Collection("batches").UpdateOne(context.TODO(), bson.D{{Key: "_id", Value: batch.ID}}, bson.D{{Key: "$set", Value: bson.D{{Key: "fetch_completed", Value: true}}}})
+		if err != nil {
+			log.Printf("Failed to update batch %s: %s", batch.ID, err)
+		} else {
+			fmt.Println("Batch: ", batch.ID, " fetch completed")
 		}
 		time.Sleep(time.Duration(cfg.Snapshot.WaitInterval) * time.Second)
 	}
-	wg.Wait()
 }
