@@ -54,8 +54,9 @@ func publishSnapshot(cam types.Camera, batch_id primitive.ObjectID, wg *sync.Wai
 	msg, err := json.Marshal(struct {
 		ID      primitive.ObjectID `json:"_id"`
 		URL     string             `json:"url"`
+		Location string 		   `json:"location"`
 		BatchID primitive.ObjectID `json:"batch_id"`
-	}{snap.ID, snap.URL, snap.BatchID})
+	}{snap.ID, snap.URL, cam.Location, snap.BatchID})
 	failOnError(err, "Failed to marshal snapshot")
 
 	err = ch.PublishWithContext(ctx,
