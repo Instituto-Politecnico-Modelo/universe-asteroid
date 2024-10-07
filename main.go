@@ -52,10 +52,10 @@ func publishSnapshot(cam types.Camera, batch_id primitive.ObjectID, wg *sync.Wai
 	defer cancel()
 
 	msg, err := json.Marshal(struct {
-		ID      primitive.ObjectID `json:"_id"`
-		URL     string             `json:"url"`
-		Location string 		   `json:"location"`
-		BatchID primitive.ObjectID `json:"batch_id"`
+		ID       primitive.ObjectID `json:"_id"`
+		URL      string             `json:"url"`
+		Location string             `json:"location"`
+		BatchID  primitive.ObjectID `json:"batch_id"`
 	}{snap.ID, snap.URL, cam.Location, snap.BatchID})
 	failOnError(err, "Failed to marshal snapshot")
 
@@ -88,7 +88,8 @@ func fetchSnapshot(cam types.Camera) types.Snapshot {
 	if err := cmd.Run(); err != nil {
 		// print command output
 		log.Printf("Failed to take snapshot for camera %s: %s", cam.ID, err)
-		log.Printf("Command output: %s", string(err.(*exec.ExitError).Stderr))
+		output, _ := cmd.CombinedOutput()
+		log.Printf("Command output: %s \nStdERR: %s", string(output), string(err.(*exec.ExitError).Stderr))
 		return types.Snapshot{}
 	}
 
