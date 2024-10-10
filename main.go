@@ -28,6 +28,9 @@ func publishSnapshot(cam types.Camera, batch_id primitive.ObjectID, wg *sync.Wai
 	defer wg.Done()
 
 	snap := fetchSnapshot(cam)
+	if snap == (types.Snapshot{}) {
+		return snap
+	}
 	snap.BatchID = batch_id
 
 	result, err := dbconn.Database(cfg.MongoDB.DB).Collection("snapshots").InsertOne(context.TODO(), snap)
